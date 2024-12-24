@@ -15,18 +15,19 @@ int tabuleiro[linhas][colunas];
 typedef int BOOL;
 
 BOOL verificacaoJogada(int linha, int coluna);
+void movimentacao(int linha, int coluna);
 BOOL movimentacaoValida(int linha, int coluna);
 void iniciarTabuleiro();
 void embaralharPeca();
 void exibirTabuleiro();
 void lerJogador(char jogador[]);
-void intoDoJogo();
+void introDoJogo();
 void menu();
 void exibirRegras();
 
 int main()
 {
-    intoDoJogo();
+    introDoJogo();
     menu();
     return 0;
 }
@@ -161,7 +162,7 @@ void lerJogador(char jogador[])
     scanf("%s", jogador);
 }
 
-void intoDoJogo()
+void introDoJogo()
 {
     printf("\n\n\t\t JOGO DO 15 \n\n");
     system("pause");
