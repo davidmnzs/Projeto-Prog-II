@@ -1,283 +1,190 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h>
-#include <conio.h>
+#include <stdbool.h>
+#include <unistd.h>
+#define TAM 4
 
-#define linhas 4
-#define colunas 4
-#define false 0
-#define true 1
-#define TAMaNHO_NOME 50
+int tabuleiro[TAM][TAM];
+int linhas = TAM, colunas = TAM;
+int linhaVazia, colunaVazia; // Para rastrear a posição do espaço vazio
 
-int tabuleiro[linhas][colunas];
 
-typedef int BOOL;
+void verificarVitoria(int tabuleiro[linhas][colunas]){
+    int count =1, verif =0;
 
-BOOL verificacaoJogada(int linha, int coluna);
-void movimentacao(int linha, int coluna);
-BOOL movimentacaoValida(int linha, int coluna);
-void iniciarTabuleiro();
-void embaralharPeca();
-void exibirTabuleiro();
-void lerJogador(char jogador[]);
-void introDoJogo();
-void menu();
-void exibirRegras();
+    for (int i = 0; i<linhas; i++) {
+        for (int j = 0; j<colunas; j++) {
+            if (tabuleiro[i][j]==count) {
+                verif = verif + 1;
 
-int main()
-{
-    introDoJogo();
-    menu();
-    return 0;
-}
-
-BOOL verificacaoJogada(int linha, int coluna)
-{
-    if (linha >= 0 && linha < linhas && coluna >= 0 && coluna < colunas)
-    {
-        if ((linha > 0 && tabuleiro[linha - 1][coluna] == 0) || (linha < linhas - 1 && tabuleiro[linha + 1][coluna] == 0) || (coluna > 0 && tabuleiro[linha][coluna - 1] == 0) || (coluna < colunas - 1 && tabuleiro[linha][coluna + 1] == 0))
-        {
-            return true;
-        }
-    }
-    printf("Movimentação inválida!\n");
-    Sleep(2000);
-    return false;
-}
-void movimentacao(int linha, int coluna)
-{
-    if (verificacaoJogada(linha, coluna))
-    {
-        if (linha > 0 && tabuleiro[linha - 1][coluna] == 0)
-        {
-            tabuleiro[linha - 1][coluna] = tabuleiro[linha][coluna];
-            tabuleiro[linha][coluna] = 0;
-        }
-        else if (linha < linhas - 1 && tabuleiro[linha + 1][coluna] == 0)
-        {
-            tabuleiro[linha + 1][coluna] = tabuleiro[linha][coluna];
-            tabuleiro[linha][coluna] = 0;
-        }
-        else if (coluna > 0 && tabuleiro[linha][coluna - 1] == 0)
-        {
-            tabuleiro[linha][coluna - 1] = tabuleiro[linha][coluna];
-            tabuleiro[linha][coluna] = 0;
-        }
-        else if (coluna < colunas - 1 && tabuleiro[linha][coluna + 1] == 0)
-        {
-            tabuleiro[linha][coluna + 1] = tabuleiro[linha][coluna];
-            tabuleiro[linha][coluna] = 0;
-        }
-    }
-}
-
-BOOL movimentacaoValida(int linha, int coluna)
-{
-    return (linha >= 0 && linha < linhas && coluna >= 0 && coluna < colunas && tabuleiro[linha][coluna] != 0);
-}
-
-void iniciarTabuleiro()
-{
-    int tamanho = 1, i, j;
-    for (i = 0; i < linhas; i++)
-    {
-        for (j = 0; j < colunas; j++)
-        {
-            tabuleiro[i][j] = tamanho++;
-        }
-    }
-    tabuleiro[linhas - 1][colunas - 1] = 0;
-}
-
-void embaralharPeca()
-{
-    srand(time(NULL));
-    int i, j, ip, jp, embaralhar;
-    for (i = 0; i < linhas; i++)
-    {
-        for (j = 0; j < colunas; j++)
-        {
-            if (i == linhas - 1 && j == colunas - 1)
-                continue;
-            ip = rand() % linhas;
-            jp = rand() % colunas;
-
-            while (ip == linhas - 1 && jp == colunas - 1)
-            {
-                ip = rand() % linhas;
-                jp = rand() % colunas;
             }
-            embaralhar = tabuleiro[i][j];
-            tabuleiro[i][j] = tabuleiro[ip][jp];
-            tabuleiro[ip][jp] = embaralhar;
+            count = count+1;
+
         }
     }
+    if (verif==15) {
+        printf("Voce venceu");
+    }
+    //so pra verificar se funciona
+    else {
+        printf("deu bom nao");
+    }
+}
 
-    embaralhar = tabuleiro[linhas - 1][colunas - 1];
-    tabuleiro[linhas - 1][colunas - 1] = 0;
-    for (i = 0; i < linhas; i++)
-    {
-        for (j = 0; j < colunas; j++)
-        {
-            if (tabuleiro[i][j] == 0 && !(i == linhas - 1 && j == colunas - 1))
-            {
-                tabuleiro[i][j] = embaralhar;
-                return;
+// Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
+void inicializarTabuleiro() {
+    int valor = 1;
+    for (int i = 0; i < TAM; i++) {
+        for (int j = 0; j < TAM; j++) {
+            if (valor < TAM * TAM) {
+                tabuleiro[i][j] = valor++;
+            } else {
+                tabuleiro[i][j] = 0; // Espaço vazio
+                linhaVazia = i; // Salvar posição inicial do espaço vazio
+                colunaVazia = j;
             }
         }
     }
 }
 
-void exibirTabuleiro()
-{
-    int i, j;
-    system("cls");
-    for (i = 0; i < linhas; i++)
-    {
-        printf("+-----+-----+-----+-----+\n");
-        for (j = 0; j < colunas; j++)
-        {
-            if (tabuleiro[i][j] == 0)
-            {
-                printf("|     ");
-            }
-            if (tabuleiro[i][j] >= 1 && tabuleiro[i][j] < 10)
-            {
-                printf("|  %d  ", tabuleiro[i][j]);
-            }
-            if (tabuleiro[i][j] >= 10)
-            {
-                printf("|  %d ", tabuleiro[i][j]);
+// Função para exibir o tabuleiro
+void exibirTabuleiro() {
+    printf("\nTabuleiro:\n\n");
+    for (int i = 0; i < TAM; i++) {
+        printf("+----+----+----+----+\n");
+        for (int j = 0; j < TAM; j++) {
+            if (tabuleiro[i][j] == 0) {
+                printf("|    ");
+            } else {
+                printf("| %2d ", tabuleiro[i][j]);
             }
         }
         printf("|\n");
     }
-    printf("+-----+-----+-----+-----+\n");
+    printf("+----+----+----+----+\n");
 }
 
-void lerJogador(char jogador[])
-{
-    printf("\n\n\t\tComo é o seu nome: \n\t\t");
-    scanf("%s", jogador);
+// Embaralhar o tabuleiro
+void embaralharPeca() {
+    srand(time(NULL));
+    for (int i = 0; i < 1000; i++) { // Realizar múltiplas trocas para um bom embaralhamento
+        int x1 = rand() % TAM, y1 = rand() % TAM;
+        int x2 = rand() % TAM, y2 = rand() % TAM;
+        int temp = tabuleiro[x1][y1];
+        tabuleiro[x1][y1] = tabuleiro[x2][y2];
+        tabuleiro[x2][y2] = temp;
+
+        // Atualizar posição do espaço vazio se for trocado
+        if (tabuleiro[x1][y1] == 0) {
+            linhaVazia = x1;
+            colunaVazia = y1;
+        } else if (tabuleiro[x2][y2] == 0) {
+            linhaVazia = x2;
+            colunaVazia = y2;
+        }
+    }
 }
 
-void introDoJogo()
-{
-    printf("\n\n\t\t JOGO DO 15 \n\n");
-    system("pause");
-    system("cls");
-}
-
-void exibirRegras()
-{
-    system("cls");
+// Exibir regras do jogo
+void exibirRegras() {
     printf("\nRegras do Jogo dos 15:\n");
-    printf("1. O tabuleiro e composto por numeros de 1 a 15 e um espaco vazio.\n");
-    printf("2. O objetivo e organizar os numeros em ordem crescente, deixando o espaco vazio no final.\n");
-    printf("3. Voce pode mover pecas para o espaco vazio adjacente.\n");
+    printf("1. O tabuleiro é composto por números de 1 a 15 e um espaço vazio.\n");
+    printf("2. O objetivo é organizar os números em ordem crescente, deixando o espaço vazio no final.\n");
+    printf("3. Você pode mover peças para o espaço vazio adjacente usando W (cima), A (esquerda), S (baixo) e D (direita).\n");
     printf("\nPressione ENTER para voltar ao menu...");
     getchar();
     getchar();
 }
 
-void menu()
-{
-    char opcao;
-    char jogador[TAMaNHO_NOME];
-    int linha, coluna;
-    ;
-    do
-    {
+// Movimentar espaço vazio com WASD
+void movimentarEspaco(char direcao) {
+    int novaLinha = linhaVazia, novaColuna = colunaVazia;
 
-        printf("\nBem vindo ao Jogo dos 15!\n\n");
-        printf("\nA. Jogar");
-        printf("\nB. Regras do jogo");
-        printf("\nC. Sair\n");
-        printf("\nOpcao: ");
+    if (direcao == 'w' || direcao == 'W') {
+        novaLinha--;
+    } else if (direcao == 'a' || direcao == 'A') {
+        novaColuna--;
+    } else if (direcao == 's' || direcao == 'S') {
+        novaLinha++;
+    } else if (direcao == 'd' || direcao == 'D') {
+        novaColuna++;
+    }
+
+    // Verificar se o movimento é válido
+    if (novaLinha >= 0 && novaLinha < TAM && novaColuna >= 0 && novaColuna < TAM) {
+        tabuleiro[linhaVazia][colunaVazia] = tabuleiro[novaLinha][novaColuna];
+        tabuleiro[novaLinha][novaColuna] = 0;
+        linhaVazia = novaLinha;
+        colunaVazia = novaColuna;
+
+        //aqui
+        verificarVitoria(tabuleiro);
+    } else {
+        printf("Movimento inválido!\n");
+    }
+}
+
+// Jogar o jogo
+void jogar() {
+    inicializarTabuleiro();
+    embaralharPeca();
+    char movimento;
+
+    do {
+        exibirTabuleiro();
+        printf("\nUse W, A, S, D para mover o espaço vazio. Pressione Q para sair.\n");
+        printf("Movimento: ");
+        scanf(" %c", &movimento);
+
+        if (movimento == 'q' || movimento == 'Q') {
+            printf("\nVocê saiu do jogo.\n");
+            break;
+        }
+
+        movimentarEspaco(movimento);
+    } while (1);
+}
+
+
+// Menu principal
+void menu() {
+    char opcao;
+    do {
+        printf("\nBem-vindo ao Jogo dos 15!\n\n");
+        printf("A. Jogar\n");
+        printf("B. Regras do jogo\n");
+        printf("C. Sair\n");
+        printf("\nOpção: ");
         scanf(" %c", &opcao);
-        switch (opcao)
-        {
+
+        switch (opcao) {
         case 'a':
         case 'A':
-            system("cls");
-            lerJogador(jogador);
-            iniciarTabuleiro(tabuleiro);
-            embaralharPeca(tabuleiro);
-
-            while (1)
-            {
-                system("cls");
-
-                exibirTabuleiro(tabuleiro);
-                
-                printf("Selecione a peça ao lado do espaço vazio (Use 'w' (cima), 's' (baixo), 'a' (esquerda), 'd' (direita)) para fazer os movimentos: \n");
-
-                char movimento = _getch();
-
-                int linhaVazia, colunaVazia;
-                for (int i = 0; i < linhas; i++)
-                {
-                    for (int j = 0; j < colunas; j++)
-                    {
-                        if (tabuleiro[i][j] == 0)
-                        {
-                            linhaVazia = i;
-                            colunaVazia = j;
-                        }
-                    }
-                }
-
-                switch (movimento)
-                {
-                case 'w':
-                    linha = linhaVazia - 1;
-                    coluna = colunaVazia;
-                    break;
-                case 's':
-                    linha = linhaVazia + 1;
-                    coluna = colunaVazia;
-                    break;
-                case 'a':
-                    linha = linhaVazia;
-                    coluna = colunaVazia - 1;
-                    break;
-                case 'd':
-                    linha = linhaVazia;
-                    coluna = colunaVazia + 1;
-                    break;
-                default:
-                    printf("Movimento inválido!\n");
-                    Sleep(2000);
-                    continue;
-                }
-
-                if (movimentacaoValida( linha, coluna))
-                {
-                    movimentacao(linha, coluna);
-                }
-                else
-                {
-                    printf("Movimentação inválida!\n");
-                    Sleep(2000);
-                }
-            }
+            jogar();
             break;
 
         case 'b':
         case 'B':
             exibirRegras();
-            system("cls");
             break;
 
         case 'c':
         case 'C':
-            printf("\nObrigado por Jogar!");
+            printf("\nObrigado por jogar!\n");
             break;
 
         default:
-            printf("\nopcao invalida");
+            printf("\nOpção inválida!\n");
+            sleep(1);
             break;
         }
     } while (opcao != 'c' && opcao != 'C');
+}
+
+
+
+int main() {
+    menu();
+    return 0;
 }
