@@ -1,36 +1,25 @@
+#include <SDL2/SDL_video.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdbool.h>
 #include <unistd.h>
+//iNCLUINDO AS BIBLIOTECAS DA INTERFACE
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #define TAM 4
+//DEFININDO OS ESPACOS NA TELA
+#define TAMANHO_CELULA 100
+#define ESPACO_ENTRE_CELULA 5
+#define LARGURA_JANELA (TAM * (TAMANHO_CELULA + ESPACO_ENTRE_CELULA))
+#define ALTURA_JANELA (TAM * (TAMANHO_CELULA + ESPACO_ENTRE_CELULA))
+
 
 int tabuleiro[TAM][TAM];
 int linhas = TAM, colunas = TAM;
 int linhaVazia, colunaVazia; // Para rastrear a posição do espaço vazio
 
-int verificarVitoria(int tabuleiro[linhas][colunas])
-{
-    int count = 1, verif = 0;
-    for (int i = 0; i < linhas; i++)
-    {
-        for (int j = 0; j < colunas; j++)
-        {
-            if (tabuleiro[i][j] == count)
-            {
-                verif = verif + 1;
-            }
-            count = count + 1;
-        }
-    }
-    if (verif == 15)
-    {
-        printf("Voce venceu");
-        menu();
-    }
-    
-}
-
+void menu();
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
 void inicializarTabuleiro()
 {
@@ -52,7 +41,6 @@ void inicializarTabuleiro()
         }
     }
 }
-
 // Função para exibir o tabuleiro
 void exibirTabuleiro()
 {
@@ -74,6 +62,28 @@ void exibirTabuleiro()
         printf("|\n");
     }
     printf("+----+----+----+----+\n");
+}
+
+int verificarVitoria(int tabuleiro[linhas][colunas])
+{
+    int count = 1, verif = 0;
+    for (int i = 0; i < linhas; i++)
+    {
+        for (int j = 0; j < colunas; j++)
+        {
+            if (tabuleiro[i][j] == count)
+            {
+                verif = verif + 1;
+            }
+            count = count + 1;
+        }
+    }
+    if (verif == 15)
+    {
+        printf("Voce venceu");
+        menu();
+    }
+    return 0;
 }
 
 // Embaralhar o tabuleiro
@@ -105,7 +115,7 @@ void embaralharPeca()
 // Exibir regras do jogo
 void exibirRegras()
 {
-    
+
     printf("\nRegras do Jogo dos 15:\n");
     printf("1. O tabuleiro é composto por números de 1 a 15 e um espaço vazio.\n");
     printf("2. O objetivo é organizar os números em ordem crescente, deixando o espaço vazio no final.\n");
@@ -178,42 +188,20 @@ void jogar()
     } while (1);
 }
 
-// Menu principal
+// Exclusao do antigo menu e inclusao do novo com interface
+
 void menu()
 {
-    char opcao;
-    do
-    {
-        printf("\nBem-vindo ao Jogo dos 15!\n\n");
-        printf("A. Jogar\n");
-        printf("B. Regras do jogo\n");
-        printf("C. Sair\n");
-        printf("\nOpção: ");
-        scanf(" %c", &opcao);
+    SDL_Init(SDL_INIT_VIDEO);
+    TTF_Init();
 
-        switch (opcao)
-        {
-        case 'a':
-        case 'A':
-            jogar();
-            break;
-
-        case 'b':
-        case 'B':
-            exibirRegras();
-            break;
-
-        case 'c':
-        case 'C':
-            printf("\nObrigado por jogar!\n");
-            break;
-
-        default:
-            printf("\nOpção inválida!\n");
-            sleep(1);
-            break;
-        }
-    } while (opcao != 'c' && opcao != 'C');
+    //comando para iniciar a Janela do jogo.
+    SDL_Window *janela = SDL_CreateWindow(
+        "O jogo dos 15",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        LARGURA_JANELA, ALTURA_JANELA,
+        SDL_WINDOW_SHOWN
+    );
 }
 
 int main()
