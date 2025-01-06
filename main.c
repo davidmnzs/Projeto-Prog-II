@@ -82,44 +82,27 @@ int verificarVitoria(int tabuleiro[linhas][colunas]) {
 // Embaralhar o tabuleiro
 void embaralharPeca() {
   // Define o número de movimentos para embaralhar
-  int movimentos = 5; // Altere este número para mais ou menos dificuldade
-
   srand(time(NULL));
+      for (int i = 0; i < 1000; i++)
+      { // Realizar múltiplas trocas para um bom embaralhamento
+          int x1 = rand() % TAM, y1 = rand() % TAM;
+          int x2 = rand() % TAM, y2 = rand() % TAM;
+          int temp = tabuleiro[x1][y1];
+          tabuleiro[x1][y1] = tabuleiro[x2][y2];
+          tabuleiro[x2][y2] = temp;
 
-  // Faz um número limitado de movimentos válidos
-  for (int i = 0; i < movimentos; i++) {
-    int novaLinha = linhaVazia;
-    int novaColuna = colunaVazia;
-
-    // Escolhe uma direção aleatória válida para mover a peça
-    int direcao = rand() % 4;
-    switch (direcao) {
-    case 0: // Cima
-      novaLinha = linhaVazia - 1;
-      break;
-    case 1: // Baixo
-      novaLinha = linhaVazia + 1;
-      break;
-    case 2: // Esquerda
-      novaColuna = colunaVazia - 1;
-      break;
-    case 3: // Direita
-      novaColuna = colunaVazia + 1;
-      break;
-    }
-
-    // Verifica se o movimento é válido
-    if (novaLinha >= 0 && novaLinha < TAM && novaColuna >= 0 &&
-        novaColuna < TAM) {
-      // Troca a peça com o espaço vazio
-      tabuleiro[linhaVazia][colunaVazia] = tabuleiro[novaLinha][novaColuna];
-      tabuleiro[novaLinha][novaColuna] = 0;
-
-      // Atualiza a posição do espaço vazio
-      linhaVazia = novaLinha;
-      colunaVazia = novaColuna;
-    }
-  }
+          // Atualizar posição do espaço vazio se for trocado
+          if (tabuleiro[x1][y1] == 0)
+          {
+              linhaVazia = x1;
+              colunaVazia = y1;
+          }
+          else if (tabuleiro[x2][y2] == 0)
+          {
+              linhaVazia = x2;
+              colunaVazia = y2;
+          }
+      }
 }
 
 // Movimentar espaço vazio com WASD
