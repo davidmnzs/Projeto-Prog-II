@@ -26,6 +26,7 @@ Mix_Chunk *somMovimento = NULL;
 void menu();
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
 void vitoria();
+void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer);
 
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
 void inicializarTabuleiro() {
@@ -81,11 +82,13 @@ int verificarVitoria(int tabuleiro[linhas][colunas]) {
   return 0;
 }
 
+//vr global dificuldade
+int dificuldade =1000;
 // Embaralhar o tabuleiro
 void embaralharPeca() {
   // Define o número de movimentos para embaralhar
   srand(time(NULL));
-      for (int i = 0; i < 1000; i++)
+      for (int i = 0; i < dificuldade; i++)
       { // Realizar múltiplas trocas para um bom embaralhamento
           int x1 = rand() % TAM, y1 = rand() % TAM;
           int x2 = rand() % TAM, y2 = rand() % TAM;
@@ -399,7 +402,63 @@ void jogar(SDL_Window *window, SDL_Renderer *renderer) {
 
   TTF_CloseFont(fonte);
 }
+//Implementacao do dash para dificuldade do jogo
 
+void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer){
+    TTF_Font *fonte = TTF_OpenFont("arial.ttf", 24);
+       if (!fonte) {
+           printf("Erro ao carregar fonte: %s\n", TTF_GetError());
+           return;
+       }
+
+    bool escolhendo = true;
+    SDL_Event evento;
+
+    while(escolhendo){
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                SDL_RenderClear(renderer);
+
+                SDL_Color corTexto = {0, 0, 0, 255};
+                renderizarTexto(renderer, fonte, "Escolha a dificuldade:", corTexto, 80, 30);
+                renderizarTexto(renderer, fonte, "1. Facil", corTexto, 160, 100);
+                renderizarTexto(renderer, fonte, "2. Medio", corTexto, 160, 140);
+                renderizarTexto(renderer, fonte, "3. Dificil", corTexto, 160, 180);
+                renderizarTexto(renderer, fonte, "Pressione ESC para voltar", corTexto, 80, 240);
+
+                SDL_RenderPresent(renderer);
+
+                while (SDL_PollEvent(&evento)) {
+                    if (evento.type == SDL_QUIT) {
+                        escolhendo = false;
+                    } else if (evento.type == SDL_KEYDOWN) {
+                        switch (evento.key.keysym.sym) {
+                        case SDLK_1:
+                            dificuldade = 500; // Fácil
+                            jogar(window, renderer);
+                            escolhendo = false;
+                            break;
+                        case SDLK_2:
+                            dificuldade = 1000; // Médio
+                            jogar(window, renderer);
+                            escolhendo = false;
+                            break;
+                        case SDLK_3:
+                            dificuldade = 2000; // Difícil
+                            jogar(window, renderer);
+                            escolhendo = false;
+                            break;
+                        case SDLK_ESCAPE:
+                            escolhendo = false;
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            TTF_CloseFont(fonte);
+
+    }
 // Exclusao do antigo menu e inclusao do novo com interface
 
 void menu() {
@@ -468,12 +527,12 @@ void menu() {
         } else if (evento.type == SDL_KEYDOWN) {
           switch (evento.key.keysym.sym) {
           case SDLK_a:
-            jogar(janela, renderer);
+            Escolha_dificuldade(janela,renderer);
             break;
           case SDLK_b:
             exibirRegras(janela, renderer);
             break;
-          case SDLK_c:
+          case SDLK_d:
             rodando = false;
             break;
           }
