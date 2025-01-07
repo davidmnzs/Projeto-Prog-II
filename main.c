@@ -20,6 +20,8 @@
 int tabuleiro[TAM][TAM];
 int linhas = TAM, colunas = TAM;
 int linhaVazia, colunaVazia; // Para rastrear a posição do espaço vazio
+//Variavel global para o audio
+Mix_Chunk *somMovimento = NULL;
 
 void menu();
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
@@ -126,6 +128,8 @@ void movimentarEspaco(char direcao) {
     tabuleiro[novaLinha][novaColuna] = 0;
     linhaVazia = novaLinha;
     colunaVazia = novaColuna;
+    //reproduz som ao movimentar
+    Mix_PlayChannel(-1, somMovimento, 0);
 
     // aqui
     verificarVitoria(tabuleiro);
@@ -476,6 +480,9 @@ void menu() {
         }
       }
     }
+
+
+
     TTF_CloseFont(fonte);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(janela);
@@ -485,6 +492,16 @@ void menu() {
 }
 
 int main() {
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
+        //return;
+    }
+    somMovimento = Mix_LoadWAV("cliick.mp3");
+    if (somMovimento == NULL) {
+        printf("Erro ao carregar som: %s\n", Mix_GetError());
+       // return;
+    }
   menu();
+
   return 0;
 }
