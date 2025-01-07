@@ -1,17 +1,16 @@
+#include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-// iNCLUINDO AS BIBLIOTECAS DA INTERFACE
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_ttf.h>
+
 #define TAM 4
-// DEFININDO OS ESPACOS NA TELA
 #define TAMANHO_CELULA 150
 #define ESPACO_ENTRE_CELULA 7
 #define LARGURA_JANELA (TAM * (TAMANHO_CELULA + ESPACO_ENTRE_CELULA))
@@ -19,15 +18,25 @@
 
 int tabuleiro[TAM][TAM];
 int linhas = TAM, colunas = TAM;
-int linhaVazia, colunaVazia; // Para rastrear a posição do espaço vazio
-//Variavel global para o audio
+int linhaVazia, colunaVazia;
+int dificuldade = 1000;
 Mix_Chunk *somMovimento = NULL;
 
-void menu();
+void inicializarTabuleiro();
+void embaralharPeca();
+void exibirTabuleiro();
+void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte);
+void movimentarEspaco(char direcao);
+int verificarVitoria(int tabuleiro[linhas][colunas]);
+void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto, SDL_Color cor, int x, int y);
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
 void vitoria();
+void exibirRegras(SDL_Window *window, SDL_Renderer *renderer);
 void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer);
+void jogar(SDL_Window *window, SDL_Renderer *renderer);
+void menu();
 
+// Inicializa o tabuleiro com números de 1 a 15 e um espaço vazio
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
 void inicializarTabuleiro() {
   int valor = 1;
@@ -43,116 +52,86 @@ void inicializarTabuleiro() {
     }
   }
 }
-// Função para exibir o tabuleiro
-void exibirTabuleiro() {
-  printf("\nTabuleiro:\n\n");
-  for (int i = 0; i < TAM; i++) {
-    printf("+----+----+----+----+\n");
-    for (int j = 0; j < TAM; j++) {
-      if (tabuleiro[i][j] == 0) {
-        printf("|    ");
-      } else {
-        printf("| %2d ", tabuleiro[i][j]);
-      }
-    }
-    printf("|\n");
-  }
-  printf("+----+----+----+----+\n");
-}
 
-int verificarVitoria(int tabuleiro[linhas][colunas]) {
-  int count = 1, verif = 0;
-  for (int i = 0; i < linhas; i++) {
-    for (int j = 0; j < colunas; j++) {
-      if (tabuleiro[i][j] == count) {
-        verif = verif + 1;
-      }
-      count = count + 1;
-    }
-  }
-  int veri = 0;
-  if (verif == 15) {
-      if(veri == 0){
-          vitoria();
-          veri = 1;
-      }
-
-    menu();
-  }
-  return 0;
-}
-
-//vr global dificuldade
-int dificuldade =1000;
-// Embaralhar o tabuleiro
+// Embaralha as peças do tabuleiro
 void embaralharPeca() {
-  // Define o número de movimentos para embaralhar
-  srand(time(NULL));
-      for (int i = 0; i < dificuldade; i++)
-      { // Realizar múltiplas trocas para um bom embaralhamento
-          int x1 = rand() % TAM, y1 = rand() % TAM;
-          int x2 = rand() % TAM, y2 = rand() % TAM;
-          int temp = tabuleiro[x1][y1];
-          tabuleiro[x1][y1] = tabuleiro[x2][y2];
-          tabuleiro[x2][y2] = temp;
+    srand(time(NULL));
 
-          // Atualizar posição do espaço vazio se for trocado
-          if (tabuleiro[x1][y1] == 0)
-          {
-              linhaVazia = x1;
-              colunaVazia = y1;
-          }
-          else if (tabuleiro[x2][y2] == 0)
-          {
-              linhaVazia = x2;
-              colunaVazia = y2;
-          }
-      }
+    // Variável para contar o número de inversões
+    int inversoes;
+
+    // Embaralhamento até que o número de inversões seja par
+    do {
+        inversoes = 0;
+
+        // Realiza o embaralhamento de peças
+        for (int i = 0; i < dificuldade; i++) {
+            // Escolhe duas posições aleatórias
+            int x1 = rand() % TAM;
+            int y1 = rand() % TAM;
+            int x2 = rand() % TAM;
+            int y2 = rand() % TAM;
+
+            // Troca os valores das duas posições
+            int temp = tabuleiro[x1][y1];
+            tabuleiro[x1][y1] = tabuleiro[x2][y2];
+            tabuleiro[x2][y2] = temp;
+
+            // Se alguma das posições trocadas for a posição vazia (0), atualiza a posição da linha e coluna vazia
+            if (tabuleiro[x1][y1] == 0) {
+                linhaVazia = x1;
+                colunaVazia = y1;
+            } else if (tabuleiro[x2][y2] == 0) {
+                linhaVazia = x2;
+                colunaVazia = y2;
+            }
+        }
+
+        // Conta o número de inversões no tabuleiro
+        int arr[TAM * TAM];  // Cria um array para armazenar as peças do tabuleiro
+        int idx = 0;
+
+        // Transforma o tabuleiro em um array unidimensional
+        for (int i = 0; i < TAM; i++) {
+            for (int j = 0; j < TAM; j++) {
+                arr[idx] = tabuleiro[i][j];
+                idx++;
+            }
+        }
+
+        // Conta o número de inversões no array
+        for (int i = 0; i < TAM * TAM - 1; i++) {
+            for (int j = i + 1; j < TAM * TAM; j++) {
+                // Se arr[i] e arr[j] estão fora de ordem e não são o número 0, conta como uma inversão
+                if (arr[i] != 0 && arr[j] != 0 && arr[i] > arr[j]) {
+                    inversoes++;
+                }
+            }
+        }
+
+    // Continua embaralhando até o número de inversões ser par
+    } while (inversoes % 2 != 0);
 }
 
-// Movimentar espaço vazio com WASD
-void movimentarEspaco(char direcao) {
-  int novaLinha = linhaVazia, novaColuna = colunaVazia;
 
-  if (direcao == 'w' || direcao == 'W') {
-    novaLinha--;
-  } else if (direcao == 'a' || direcao == 'A') {
-    novaColuna--;
-  } else if (direcao == 's' || direcao == 'S') {
-    novaLinha++;
-  } else if (direcao == 'd' || direcao == 'D') {
-    novaColuna++;
-  }
-
-  // Verificar se o movimento é válido
-  if (novaLinha >= 0 && novaLinha < TAM && novaColuna >= 0 &&
-      novaColuna < TAM) {
-    tabuleiro[linhaVazia][colunaVazia] = tabuleiro[novaLinha][novaColuna];
-    tabuleiro[novaLinha][novaColuna] = 0;
-    linhaVazia = novaLinha;
-    colunaVazia = novaColuna;
-    //reproduz som ao movimentar
-    Mix_PlayChannel(-1, somMovimento, 0);
-
-    // aqui
-    verificarVitoria(tabuleiro);
-  } else {
-    printf("Movimento inválido!\n");
-  }
+// Exibe o tabuleiro no console
+void exibirTabuleiro() {
+    printf("\nTabuleiro:\n\n");
+    for (int i = 0; i < TAM; i++) {
+        printf("+----+----+----+----+\n");
+        for (int j = 0; j < TAM; j++) {
+            if (tabuleiro[i][j] == 0) {
+                printf("|    ");
+            } else {
+                printf("| %2d ", tabuleiro[i][j]);
+            }
+        }
+        printf("|\n");
+    }
+    printf("+----+----+----+----+\n");
 }
 
-void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
-                     SDL_Color cor, int x, int y) {
-  SDL_Surface *surface = TTF_RenderText_Solid(fonte, texto, cor);
-  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-  SDL_Rect destino = {x, y, surface->w, surface->h};
-  SDL_RenderCopy(renderer, texture, NULL, &destino);
-
-  SDL_FreeSurface(surface);
-  SDL_DestroyTexture(texture);
-}
-
+// Renderiza o tabuleiro na interface gráfica
 void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte) {
   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Fundo branco
   SDL_RenderClear(renderer);
@@ -191,113 +170,76 @@ void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte) {
 
   SDL_RenderPresent(renderer);
 }
-// Exibir regras do jogo
-void exibirRegras(SDL_Window *window, SDL_Renderer *renderer) {
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 16);
 
-  SDL_Color corTexto = {255, 255, 255, 255};
-  bool exibindo = true;
-  SDL_Event evento;
+// Movimenta o espaço vazio
+// Movimentar espaço vazio com WASD
+void movimentarEspaco(char direcao) {
+  int novaLinha = linhaVazia, novaColuna = colunaVazia;
 
-  while (exibindo) {
-    // Limpar a tela
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Preto
-    SDL_RenderClear(renderer);
-
-    // Renderizar texto
-    renderizarTexto(renderer, fonte, "Regras do Jogo:", corTexto, 80, 30);
-    renderizarTexto(
-        renderer, fonte,
-        "1. O tabuleiro e composto por números de 1 a 15 e um espaço vazio.",
-        corTexto, 20, 80);
-    renderizarTexto(renderer, fonte,
-                    "2. O objetivo e organizar os números em ordem crescente,",
-                    corTexto, 20, 120);
-    renderizarTexto(renderer, fonte, " deixando o espaço vazio no final.",
-                    corTexto, 20, 160);
-    renderizarTexto(
-        renderer, fonte,
-        "3. Voce pode mover peças para o espaco vazio adjacente usando:",
-        corTexto, 20, 200);
-    renderizarTexto(renderer, fonte,
-                    " W cima, A esquerda, S baixo e D direita.", corTexto, 20,
-                    240);
-    renderizarTexto(renderer, fonte, "Pressione ESC para voltar ao menu.",
-                    corTexto, 80, 300);
-
-    // Apresentar na tela
-    SDL_RenderPresent(renderer);
-
-    // Ciclo de eventos para sair
-    while (SDL_PollEvent(&evento)) {
-      if (evento.type == SDL_QUIT) {
-        exibindo = false;
-        break;
-      } else if (evento.type == SDL_KEYDOWN &&
-                 evento.key.keysym.sym == SDLK_ESCAPE) {
-        exibindo = false;
-        break;
-      }
-    }
+  if (direcao == 'w' || direcao == 'W') {
+    novaLinha--;
+  } else if (direcao == 'a' || direcao == 'A') {
+    novaColuna--;
+  } else if (direcao == 's' || direcao == 'S') {
+    novaLinha++;
+  } else if (direcao == 'd' || direcao == 'D') {
+    novaColuna++;
   }
 
-  // Liberar recursos
-  TTF_CloseFont(fonte);
+  // Verificar se o movimento é válido
+  if (novaLinha >= 0 && novaLinha < TAM && novaColuna >= 0 &&
+      novaColuna < TAM) {
+    tabuleiro[linhaVazia][colunaVazia] = tabuleiro[novaLinha][novaColuna];
+    tabuleiro[novaLinha][novaColuna] = 0;
+    linhaVazia = novaLinha;
+    colunaVazia = novaColuna;
+    //reproduz som ao movimentar
+    Mix_PlayChannel(-1, somMovimento, 0);
+
+    // aqui
+    verificarVitoria(tabuleiro);
+  } else {
+    printf("Movimento inválido!\n");
+  }
 }
 
-void vitoria() {
-  SDL_Init(SDL_INIT_VIDEO);
-  TTF_Init();
-  // para fechar janela
-  int run = 1;
-  SDL_Event event;
-    if (event.type == SDL_QUIT) {
-      run = 0; // Sai do loop ao clicar no "X"
+// Verifica se o jogador venceu
+int verificarVitoria(int tabuleiro[linhas][colunas]) {
+  int count = 1, verif = 0;
+  for (int i = 0; i < linhas; i++) {
+    for (int j = 0; j < colunas; j++) {
+      if (tabuleiro[i][j] == count) {
+        verif = verif + 1;
+      }
+      count = count + 1;
     }
-    SDL_Window *janela = SDL_CreateWindow(
-        "O jogo dos 15", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        LARGURA_JANELA, ALTURA_JANELA, SDL_WINDOW_SHOWN);
-    if (!janela) {
-      printf("Erro ao criar janela: %s\n", SDL_GetError());
-      TTF_Quit();
-      SDL_Quit();
-      // return;
-    }
+  }
+  int veri = 0;
+  if (verif == 15) {
+      if(veri == 0){
+          vitoria();
+          veri = 1;
+      }
 
-    SDL_Renderer *renderer =
-        SDL_CreateRenderer(janela, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-      printf("Erro ao criar renderizador: %s\n", SDL_GetError());
-      SDL_DestroyWindow(janela);
-      TTF_Quit();
-      SDL_Quit();
-      // return;
-    }
-
-    TTF_Font *fonte = TTF_OpenFont("arial.ttf", 30);
-    if (!fonte) {
-      printf("Erro ao carregar fonte: %s\n", TTF_GetError());
-      SDL_DestroyRenderer(renderer);
-      SDL_DestroyWindow(janela);
-      TTF_Quit();
-      SDL_Quit();
-      // return;
-    }
-    // Exibir a tela de vitória
-    JogadorVenceu(janela, renderer);
-
-    // Esperar 7 segundos antes de fechar a janela de vitória
-    SDL_Delay(3000);
-
-    // Liberar recursos e fechar janela
-    TTF_CloseFont(fonte);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(janela);
-    TTF_Quit();
-    SDL_Quit();
-
-
+    menu();
+  }
+  return 0;
 }
+
+// Renderiza texto na tela
+void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
+                     SDL_Color cor, int x, int y) {
+  SDL_Surface *surface = TTF_RenderText_Solid(fonte, texto, cor);
+  SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+  SDL_Rect destino = {x, y, surface->w, surface->h};
+  SDL_RenderCopy(renderer, texture, NULL, &destino);
+
+  SDL_FreeSurface(surface);
+  SDL_DestroyTexture(texture);
+}
+
+// Exibe a mensagem de vitória
 // tela exibida quando o jogador vence
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
 
@@ -353,56 +295,111 @@ void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
   Mix_FreeMusic(musica);
 
 }
-
-// Jogar o jogo sao passados como parametro a janela menu
-void jogar(SDL_Window *window, SDL_Renderer *renderer) {
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 24);
-  if (!fonte) {
-    printf("Erro ao carregar fonte: %s\n", TTF_GetError());
-    return;
-  }
-
-  inicializarTabuleiro();
-  embaralharPeca();
-
-  bool rodando = true;
-  SDL_Event evento;
-
-  while (rodando) {
-    while (SDL_PollEvent(&evento)) {
-      if (evento.type == SDL_QUIT) {
-        rodando = false;
-      } else if (evento.type == SDL_KEYDOWN) {
-        char direcao = '\0';
-
-        switch (evento.key.keysym.sym) {
-        case SDLK_w:
-          direcao = 'w';
-          break;
-        case SDLK_a:
-          direcao = 'a';
-          break;
-        case SDLK_s:
-          direcao = 's';
-          break;
-        case SDLK_d:
-          direcao = 'd';
-          break;
-        }
-
-        if (direcao) {
-          movimentarEspaco(direcao);
-          verificarVitoria(tabuleiro);
-        }
-      }
+void vitoria() {
+  SDL_Init(SDL_INIT_VIDEO);
+  TTF_Init();
+  // para fechar janela
+  int run = 1;
+  SDL_Event event;
+    if (event.type == SDL_QUIT) {
+      run = 0; // Sai do loop ao clicar no "X"
+    }
+    SDL_Window *janela = SDL_CreateWindow(
+        "O jogo dos 15", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        LARGURA_JANELA, ALTURA_JANELA, SDL_WINDOW_SHOWN);
+    if (!janela) {
+      printf("Erro ao criar janela: %s\n", SDL_GetError());
+      TTF_Quit();
+      SDL_Quit();
+      // return;
     }
 
-    desenharTabuleiro(renderer, fonte);
+    SDL_Renderer *renderer =
+        SDL_CreateRenderer(janela, -1, SDL_RENDERER_ACCELERATED);
+    if (!renderer) {
+      printf("Erro ao criar renderizador: %s\n", SDL_GetError());
+      SDL_DestroyWindow(janela);
+      TTF_Quit();
+      SDL_Quit();
+      // return;
+    }
+
+    TTF_Font *fonte = TTF_OpenFont("arial.ttf", 30);
+    if (!fonte) {
+      printf("Erro ao carregar fonte: %s\n", TTF_GetError());
+      SDL_DestroyRenderer(renderer);
+      SDL_DestroyWindow(janela);
+      TTF_Quit();
+      SDL_Quit();
+      // return;
+    }
+    // Exibir a tela de vitória
+    JogadorVenceu(janela, renderer);
+
+    // Esperar 7 segundos antes de fechar a janela de vitória
+    SDL_Delay(3000);
+
+    // Liberar recursos e fechar janela
+    TTF_CloseFont(fonte);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(janela);
+    TTF_Quit();
+    SDL_Quit();
+}
+// Exibir regras do jogo
+// Exibir regras do jogo
+void exibirRegras(SDL_Window *window, SDL_Renderer *renderer) {
+  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 16);
+
+  SDL_Color corTexto = {255, 255, 255, 255};
+  bool exibindo = true;
+  SDL_Event evento;
+
+  while (exibindo) {
+    // Limpar a tela
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Preto
+    SDL_RenderClear(renderer);
+
+    // Renderizar texto
+    renderizarTexto(renderer, fonte, "Regras do Jogo:", corTexto, 80, 30);
+    renderizarTexto(
+        renderer, fonte,
+        "1. O tabuleiro e composto por numeros de 1 a 15 e um espaco vazio.",
+        corTexto, 20, 80);
+    renderizarTexto(renderer, fonte,
+                    "2. O objetivo e organizar os numeros em ordem crescente,",
+                    corTexto, 20, 120);
+    renderizarTexto(renderer, fonte, " deixando o espaco vazio no final.",
+                    corTexto, 20, 160);
+    renderizarTexto(
+        renderer, fonte,
+        "3. Voce pode mover pecas para o espaco vazio adjacente usando:",
+        corTexto, 20, 200);
+    renderizarTexto(renderer, fonte,
+                    " W cima, A esquerda, S baixo e D direita.", corTexto, 20,
+                    240);
+    renderizarTexto(renderer, fonte, "Pressione ESC para voltar ao menu.",
+                    corTexto, 80, 300);
+
+    // Apresentar na tela
+    SDL_RenderPresent(renderer);
+
+    // Ciclo de eventos para sair
+    while (SDL_PollEvent(&evento)) {
+      if (evento.type == SDL_QUIT) {
+        exibindo = false;
+        break;
+      } else if (evento.type == SDL_KEYDOWN &&
+                 evento.key.keysym.sym == SDLK_ESCAPE) {
+        exibindo = false;
+        break;
+      }
+    }
   }
 
+  // Liberar recursos
   TTF_CloseFont(fonte);
 }
-//Implementacao do dash para dificuldade do jogo
 
 void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer){
     TTF_Font *fonte = TTF_OpenFont("arial.ttf", 24);
@@ -433,7 +430,7 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer){
                     } else if (evento.type == SDL_KEYDOWN) {
                         switch (evento.key.keysym.sym) {
                         case SDLK_1:
-                            dificuldade = 500; // Fácil
+                            dificuldade = 50; // Fácil
                             jogar(window, renderer);
                             escolhendo = false;
                             break;
@@ -459,108 +456,153 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer){
             TTF_CloseFont(fonte);
 
     }
-// Exclusao do antigo menu e inclusao do novo com interface
-
-void menu() {
-  SDL_Init(SDL_INIT_VIDEO);
-  TTF_Init();
-  // para fechar janela
-  int run = 1;
-  SDL_Event event;
-  while (run) {
-    // Processa eventos
-    while (SDL_PollEvent(&event)) {
-      if (event.type == SDL_QUIT) {
-        run = 0; // Sai do loop ao clicar no "X"
+    // Jogar o jogo sao passados como parametro a janela menu
+    void jogar(SDL_Window *window, SDL_Renderer *renderer) {
+      TTF_Font *fonte = TTF_OpenFont("arial.ttf", 24);
+      if (!fonte) {
+        printf("Erro ao carregar fonte: %s\n", TTF_GetError());
+        return;
       }
-    }
 
-    SDL_Window *janela = SDL_CreateWindow(
-        "O jogo dos 15", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        LARGURA_JANELA, ALTURA_JANELA, SDL_WINDOW_SHOWN);
-    if (!janela) {
-      printf("Erro ao criar janela: %s\n", SDL_GetError());
-      TTF_Quit();
-      SDL_Quit();
-      return;
-    }
+      inicializarTabuleiro();
+      embaralharPeca();
 
-    SDL_Renderer *renderer =
-        SDL_CreateRenderer(janela, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) {
-      printf("Erro ao criar renderizador: %s\n", SDL_GetError());
-      SDL_DestroyWindow(janela);
-      TTF_Quit();
-      SDL_Quit();
-      return;
-    }
+      bool rodando = true;
+      SDL_Event evento;
 
-    TTF_Font *fonte = TTF_OpenFont("arial.ttf", 30);
-    if (!fonte) {
-      printf("Erro ao carregar fonte: %s\n", TTF_GetError());
-      SDL_DestroyRenderer(renderer);
-      SDL_DestroyWindow(janela);
-      TTF_Quit();
-      SDL_Quit();
-      return;
-    }
-
-    bool rodando = true;
-    SDL_Event evento;
-
-    while (rodando) {
-      SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-      SDL_RenderClear(renderer);
-
-      SDL_Color corTexto = {0, 0, 0, 255};
-      renderizarTexto(renderer, fonte, "Bem-vindo ao Jogo dos 15!", corTexto,
-                      80, 30);
-      renderizarTexto(renderer, fonte, "A. Jogar", corTexto, 160, 100);
-      renderizarTexto(renderer, fonte, "B. Regras do jogo", corTexto, 160, 140);
-      renderizarTexto(renderer, fonte, "C. Sair", corTexto, 160, 180);
-
-      SDL_RenderPresent(renderer);
-
-      while (SDL_PollEvent(&evento)) {
-        if (evento.type == SDL_QUIT) {
-          rodando = false;
-        } else if (evento.type == SDL_KEYDOWN) {
-          switch (evento.key.keysym.sym) {
-          case SDLK_a:
-            Escolha_dificuldade(janela,renderer);
-            break;
-          case SDLK_b:
-            exibirRegras(janela, renderer);
-            break;
-          case SDLK_d:
+      while (rodando) {
+        while (SDL_PollEvent(&evento)) {
+          if (evento.type == SDL_QUIT) {
             rodando = false;
-            break;
+          } else if (evento.type == SDL_KEYDOWN) {
+            char direcao = '\0';
+
+            switch (evento.key.keysym.sym) {
+            case SDLK_w:
+              direcao = 'w';
+              break;
+            case SDLK_a:
+              direcao = 'a';
+              break;
+            case SDLK_s:
+              direcao = 's';
+              break;
+            case SDLK_d:
+              direcao = 'd';
+              break;
+            }
+
+            if (direcao) {
+              movimentarEspaco(direcao);
+              verificarVitoria(tabuleiro);
+            }
           }
         }
+
+        desenharTabuleiro(renderer, fonte);
+      }
+
+      TTF_CloseFont(fonte);
+    }
+    void menu() {
+      SDL_Init(SDL_INIT_VIDEO);
+      TTF_Init();
+      // para fechar janela
+      int run = 1;
+      SDL_Event event;
+      while (run) {
+        // Processa eventos
+        while (SDL_PollEvent(&event)) {
+          if (event.type == SDL_QUIT) {
+            run = 0; // Sai do loop ao clicar no "X"
+          }
+        }
+
+        SDL_Window *janela = SDL_CreateWindow(
+            "O jogo dos 15", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            LARGURA_JANELA, ALTURA_JANELA, SDL_WINDOW_SHOWN);
+        if (!janela) {
+          printf("Erro ao criar janela: %s\n", SDL_GetError());
+          TTF_Quit();
+          SDL_Quit();
+          return;
+        }
+
+        SDL_Renderer *renderer =
+            SDL_CreateRenderer(janela, -1, SDL_RENDERER_ACCELERATED);
+        if (!renderer) {
+          printf("Erro ao criar renderizador: %s\n", SDL_GetError());
+          SDL_DestroyWindow(janela);
+          TTF_Quit();
+          SDL_Quit();
+          return;
+        }
+
+        TTF_Font *fonte = TTF_OpenFont("arial.ttf", 30);
+        if (!fonte) {
+          printf("Erro ao carregar fonte: %s\n", TTF_GetError());
+          SDL_DestroyRenderer(renderer);
+          SDL_DestroyWindow(janela);
+          TTF_Quit();
+          SDL_Quit();
+          return;
+        }
+
+        bool rodando = true;
+        SDL_Event evento;
+
+        while (rodando) {
+          SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+          SDL_RenderClear(renderer);
+
+          SDL_Color corTexto = {0, 0, 0, 255};
+          renderizarTexto(renderer, fonte, "Bem-vindo ao Jogo dos 15!", corTexto,
+                          80, 30);
+          renderizarTexto(renderer, fonte, "A. Jogar", corTexto, 160, 100);
+          renderizarTexto(renderer, fonte, "B. Regras do jogo", corTexto, 160, 140);
+          renderizarTexto(renderer, fonte, "C. Sair", corTexto, 160, 180);
+
+          SDL_RenderPresent(renderer);
+
+          while (SDL_PollEvent(&evento)) {
+            if (evento.type == SDL_QUIT) {
+              rodando = false;
+            } else if (evento.type == SDL_KEYDOWN) {
+              switch (evento.key.keysym.sym) {
+              case SDLK_a:
+                Escolha_dificuldade(janela,renderer);
+                break;
+              case SDLK_b:
+                exibirRegras(janela, renderer);
+                break;
+              case SDLK_c:
+                rodando = false;
+                break;
+              }
+            }
+          }
+        }
+
+
+
+        TTF_CloseFont(fonte);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(janela);
+        TTF_Quit();
+        SDL_Quit();
       }
     }
+    int main() {
+        if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+            printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
+            //return;
+        }
+        somMovimento = Mix_LoadWAV("cliick.mp3");
+        if (somMovimento == NULL) {
+            printf("Erro ao carregar som: %s\n", Mix_GetError());
+           // return;
+        }
+      menu();
 
-
-
-    TTF_CloseFont(fonte);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(janela);
-    TTF_Quit();
-    SDL_Quit();
-  }
-}
-
-int main() {
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-        printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
-        //return;
+      return 0;
     }
-    somMovimento = Mix_LoadWAV("cliick.mp3");
-    if (somMovimento == NULL) {
-        printf("Erro ao carregar som: %s\n", Mix_GetError());
-       // return;
-    }
-  menu();
-
-  return 0;
-}
