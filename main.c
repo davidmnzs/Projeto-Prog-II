@@ -61,7 +61,7 @@ void embaralharPeca() {
   int inversoes;
   // Embaralhamento até que o número de inversões seja par
   do {
-    inversoes = 0
+    inversoes = 0;
     // Realiza o embaralhamento de peças
     for (int i = 0; i < dificuldade; i++) {
       // Escolhe duas posições aleatórias
