@@ -1,9 +1,10 @@
 //importacoes
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_video.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -550,7 +551,7 @@ void menu() {
     SDL_Quit();
   }
 }
-int main() {
+int main(int argc, char *argv[]) {
   if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
     printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
     // return;
