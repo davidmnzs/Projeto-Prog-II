@@ -556,7 +556,7 @@ int main(int argc, char *argv[]) {
     printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
     // return;
   }
-  somMovimento = Mix_LoadWAV("arquivos/cliick.mp3");
+  somMovimento = Mix_LoadWAV("arquivos/cliick.wav");
   if (somMovimento == NULL) {
     printf("Erro ao carregar som: %s\n", Mix_GetError());
     // return;
