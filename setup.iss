@@ -15,6 +15,9 @@ Source: "SDL2_mixer.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "SDL2_ttf.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "arquivos\*"; DestDir: "{app}\arquivos"; Flags: recursesubdirs createallsubdirs
 
+[Run]
+Filename: "{app}\Projeto-Prog-II.exe"; Flags: runascurrentuser
+
 [Icons]
 ; Atalho no Menu Iniciar
 Name: "{group}\Projeto-Prog-II"; Filename: "{app}\Projeto-Prog-II.exe"

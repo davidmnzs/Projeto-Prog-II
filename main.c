@@ -232,14 +232,14 @@ void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
     printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
     return;
   }
-  Mix_Music *musica = Mix_LoadMUS("musicaVVitoria_convertido.mp3");
+  Mix_Music *musica = Mix_LoadMUS("arquivos/musicaVVitoria_convertido.mp3");
   if (musica == NULL) {
     printf("Erro ao carregar música: %s\n", Mix_GetError());
     return;
   }
   Mix_PlayMusic(musica, 1);
 
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 16);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
 
   SDL_Color corTexto = {255, 255, 255, 255};
   bool exibindo = true;
@@ -296,7 +296,7 @@ void vitoria() {
     SDL_Quit();
     // return;
   }
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 30);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 30);
   if (!fonte) {
     printf("Erro ao carregar fonte: %s\n", TTF_GetError());
     SDL_DestroyRenderer(renderer);
@@ -319,7 +319,7 @@ void vitoria() {
 // Exibir regras do jogo
 // Exibir regras do jogo
 void exibirRegras(SDL_Window *window, SDL_Renderer *renderer) {
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 16);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
 
   SDL_Color corTexto = {255, 255, 255, 255};
   bool exibindo = true;
@@ -371,7 +371,7 @@ void exibirRegras(SDL_Window *window, SDL_Renderer *renderer) {
 }
 
 void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 24);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 24);
   if (!fonte) {
     printf("Erro ao carregar fonte: %s\n", TTF_GetError());
     return;
@@ -427,7 +427,7 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
 }
 // Jogar o jogo sao passados como parametro a janela menu
 void jogar(SDL_Window *window, SDL_Renderer *renderer) {
-  TTF_Font *fonte = TTF_OpenFont("arial.ttf", 24);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 24);
   if (!fonte) {
     printf("Erro ao carregar fonte: %s\n", TTF_GetError());
     return;
@@ -502,7 +502,7 @@ void menu() {
       SDL_Quit();
       return;
     }
-    TTF_Font *fonte = TTF_OpenFont("arial.ttf", 30);
+    TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 30);
     if (!fonte) {
       printf("Erro ao carregar fonte: %s\n", TTF_GetError());
       SDL_DestroyRenderer(renderer);
@@ -556,7 +556,7 @@ int main(int argc, char *argv[]) {
     printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
     // return;
   }
-  somMovimento = Mix_LoadWAV("cliick.mp3");
+  somMovimento = Mix_LoadWAV("arquivos/cliick.mp3");
   if (somMovimento == NULL) {
     printf("Erro ao carregar som: %s\n", Mix_GetError());
     // return;
