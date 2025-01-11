@@ -141,6 +141,7 @@ void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte) {
         char numero[3];
         sprintf(numero, "%d", tabuleiro[i][j]);
         int textoX =
+        //DAVID MENEZES 11/01/2025 13:17
             rect.x + (TAMANHO_CELULA / 2) - 10; // Centraliza aproximadamente
         int textoY = rect.y + (TAMANHO_CELULA / 2) - 10;
         renderizarTexto(renderer, fonte, numero, corTexto, textoX, textoY);
