@@ -22,6 +22,9 @@ int tabuleiro[TAM][TAM];
 int linhas = TAM, colunas = TAM;
 int linhaVazia, colunaVazia;
 int dificuldade = 1000;
+int veri = 0;
+bool exibevitoria = true;
+bool rodando = true;
 Mix_Chunk *somMovimento = NULL;
 //declaracao de funcao
 void inicializarTabuleiro();
@@ -38,6 +41,12 @@ void exibirRegras(SDL_Window *window, SDL_Renderer *renderer);
 void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer);
 void jogar(SDL_Window *window, SDL_Renderer *renderer);
 void menu();
+
+
+int main(int argc, char *argv[]) {
+  menu();
+  return 0;
+}
 
 // Inicializa o tabuleiro com números de 1 a 15 e um espaço vazio
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
@@ -198,15 +207,18 @@ int verificarVitoria(int tabuleiro[linhas][colunas]) {
       count = count + 1;
     }
   }
-  int veri = 0;
-  if (verif == 15) {
-    if (veri == 0) {
-      vitoria();
-      veri = 1;
-    }
-    menu();
-  }
-  return 0;
+if (verif == 15) {
+  while(veri == 0){
+    vitoria();// chama a tela de vitoria
+    veri = 1;
+  } 
+    //rodando = false;
+    exibevitoria = false;
+    menu(); // chama o menu somente se veri já foi alterado
+    return 0;
+}
+return 0;
+
 }
 // Renderiza texto na tela
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
@@ -240,33 +252,41 @@ void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
   }
   Mix_PlayMusic(musica, 1);
 
-  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 27);
 
-  SDL_Color corTexto = {255, 255, 255, 255};
-  bool exibindo = true;
+  SDL_Color corTexto = {0, 0, 0, 255};
   SDL_Event evento;
   Uint32 tempoInicio = SDL_GetTicks();
-  while (exibindo) {
+  while (exibevitoria) {
     // Limpar a tela
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Preto
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Preto
     SDL_RenderClear(renderer);
     // Renderizar texto
     renderizarTexto(renderer, fonte, "Parabens voce Venceu", corTexto, 80, 30);
     // Apresentar na tela
     SDL_RenderPresent(renderer);
     Uint32 tempoAtual = SDL_GetTicks();
-    if (tempoAtual - tempoInicio >= 7000) { // 7000 ms = 7 segundos
-      exibindo = false;                     // Fechar a janela após 7 segundos
+    if (tempoAtual - tempoInicio >= 7000) {
+      //7000 ms = 7 segundos
+      exibevitoria = false;
+      veri = 0;
+      break;
+      SDL_DestroyWindow(window);
+      SDL_DestroyRenderer(renderer);
+  // Fechar a janela após 7 segundos
     }
     // Ciclo de eventos para sair
     while (SDL_PollEvent(&evento)) {
       if (evento.type == SDL_QUIT) {
-        exibindo = false;
+        exibevitoria = false;
         break;
+        
       }
     }
   }
   // Liberar recursos
+  SDL_DestroyWindow(window);
+
   TTF_CloseFont(fonte);
   Mix_FreeMusic(musica);
 }
@@ -308,12 +328,13 @@ void vitoria() {
   }
   // Exibir a tela de vitória
   JogadorVenceu(janela, renderer);
+  veri =  0;
   // Esperar 7 segundos antes de fechar a janela de vitória
-  SDL_Delay(3000);
+  //SDL_Delay(1000);
+  SDL_DestroyWindow(janela);
+  SDL_DestroyRenderer(renderer);
   // Liberar recursos e fechar janela
   TTF_CloseFont(fonte);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(janela);
   TTF_Quit();
   SDL_Quit();
 }
@@ -401,7 +422,7 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
       } else if (evento.type == SDL_KEYDOWN) {
         switch (evento.key.keysym.sym) {
         case SDLK_1:
-          dificuldade = 50; // Fácil
+          dificuldade = 0; // Fácil
           jogar(window, renderer);
           escolhendo = false;
           break;
@@ -512,9 +533,19 @@ void menu() {
       SDL_Quit();
       return;
     }
-    bool rodando = true;
     SDL_Event evento;
     while (rodando) {
+        //inicia audio
+      if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
+        // return;
+      }
+      somMovimento = Mix_LoadWAV("arquivos/cliick.mp3");
+      if (somMovimento == NULL) {
+        printf("Erro ao carregar som: %s\n", Mix_GetError());
+        // return;
+      }
+
       SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
       SDL_RenderClear(renderer);
 
@@ -539,6 +570,7 @@ void menu() {
             exibirRegras(janela, renderer);
             break;
           case SDLK_c:
+           // return;
             rodando = false;
             break;
           }
@@ -552,16 +584,4 @@ void menu() {
     SDL_Quit();
   }
 }
-int main(int argc, char *argv[]) {
-  if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-    printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
-    // return;
-  }
-  somMovimento = Mix_LoadWAV("arquivos/cliick.wav");
-  if (somMovimento == NULL) {
-    printf("Erro ao carregar som: %s\n", Mix_GetError());
-    // return;
-  }
-  menu();
-  return 0;
-}
+
