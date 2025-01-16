@@ -209,11 +209,12 @@ int verificarVitoria(int tabuleiro[linhas][colunas]) {
   }
 if (verif == 15) {
   while(veri == 0){
-    vitoria();// chama a tela de vitoria
+    
+    vitoria();
+    exibevitoria = false;// chama a tela de vitoria
     veri = 1;
   } 
     //rodando = false;
-    exibevitoria = false;
     menu(); // chama o menu somente se veri já foi alterado
     return 0;
 }
@@ -236,21 +237,8 @@ void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
 // tela exibida quando o jogador vence
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
 
-  if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-    printf("Erro ao inicializar SDL: %s\n", SDL_GetError());
-    return;
-  }
-
-  if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
-    printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
-    return;
-  }
   Mix_Music *musica = Mix_LoadMUS("arquivos/musicaVVitoria_convertido.mp3");
-  if (musica == NULL) {
-    printf("Erro ao carregar música: %s\n", Mix_GetError());
-    return;
-  }
-  Mix_PlayMusic(musica, 1);
+  Mix_PlayMusic(musica, -1);
 
   TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 27);
 
@@ -270,25 +258,29 @@ void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
       //7000 ms = 7 segundos
       exibevitoria = false;
       veri = 0;
-      break;
       SDL_DestroyWindow(window);
       SDL_DestroyRenderer(renderer);
+      break;
+      
   // Fechar a janela após 7 segundos
     }
     // Ciclo de eventos para sair
     while (SDL_PollEvent(&evento)) {
       if (evento.type == SDL_QUIT) {
+        Mix_FreeMusic(musica);
         exibevitoria = false;
         break;
+
         
       }
     }
+
   }
   // Liberar recursos
-  SDL_DestroyWindow(window);
-
   TTF_CloseFont(fonte);
   Mix_FreeMusic(musica);
+  SDL_DestroyWindow(window);
+  SDL_DestroyRenderer(renderer);
 }
 void vitoria() {
   SDL_Init(SDL_INIT_VIDEO);
@@ -329,16 +321,14 @@ void vitoria() {
   // Exibir a tela de vitória
   JogadorVenceu(janela, renderer);
   veri =  0;
-  // Esperar 7 segundos antes de fechar a janela de vitória
-  //SDL_Delay(1000);
+
   SDL_DestroyWindow(janela);
   SDL_DestroyRenderer(renderer);
-  // Liberar recursos e fechar janela
   TTF_CloseFont(fonte);
   TTF_Quit();
   SDL_Quit();
 }
-// Exibir regras do jogo
+
 // Exibir regras do jogo
 void exibirRegras(SDL_Window *window, SDL_Renderer *renderer) {
   TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
@@ -535,6 +525,8 @@ void menu() {
     }
     SDL_Event evento;
     while (rodando) {
+      exibevitoria = true;
+      veri = 0;
         //inicia audio
       if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
@@ -571,12 +563,14 @@ void menu() {
             break;
           case SDLK_c:
            // return;
+           exibevitoria = false;
             rodando = false;
             break;
           }
         }
       }
     }
+  
     TTF_CloseFont(fonte);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(janela);
