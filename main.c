@@ -240,17 +240,17 @@ void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
   Mix_Music *musica = Mix_LoadMUS("arquivos/musicaVVitoria_convertido.mp3");
   Mix_PlayMusic(musica, -1);
 
-  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 27);
+  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 40);
 
-  SDL_Color corTexto = {0, 0, 0, 255};
+  SDL_Color corTexto = {1, 1, 1, 255};
   SDL_Event evento;
   Uint32 tempoInicio = SDL_GetTicks();
   while (exibevitoria) {
     // Limpar a tela
-    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Preto
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); 
     SDL_RenderClear(renderer);
     // Renderizar texto
-    renderizarTexto(renderer, fonte, "Parabens voce Venceu", corTexto, 80, 30);
+    renderizarTexto(renderer, fonte, "Parabens voce Venceu", corTexto, 135, 250);
     // Apresentar na tela
     SDL_RenderPresent(renderer);
     Uint32 tempoAtual = SDL_GetTicks();
@@ -496,6 +496,7 @@ void menu() {
         run = 0; // Sai do loop ao clicar no "X"
       }
     }
+  SDL_Event event;
     SDL_Window *janela = SDL_CreateWindow(
         "O jogo dos 15", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         LARGURA_JANELA, ALTURA_JANELA, SDL_WINDOW_SHOWN);
@@ -523,12 +524,7 @@ void menu() {
       SDL_Quit();
       return;
     }
-    SDL_Event evento;
-    while (rodando) {
-      exibevitoria = true;
-      veri = 0;
-        //inicia audio
-      if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
         printf("Erro ao inicializar SDL_mixer: %s\n", Mix_GetError());
         // return;
       }
@@ -537,6 +533,12 @@ void menu() {
         printf("Erro ao carregar som: %s\n", Mix_GetError());
         // return;
       }
+    SDL_Event evento;
+    while (rodando) {
+      exibevitoria = true;
+      veri = 0;
+        //inicia audio
+      
 
       SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
       SDL_RenderClear(renderer);
