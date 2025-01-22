@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <windows.h>
 #include <vector>
 //definicoes
 #define TAM 4
@@ -26,14 +27,20 @@ int dificuldade = 1000;
 int veri = 0;
 bool exibevitoria = true;
 bool rodando = true;
+// Calculando Tempo
+LARGE_INTEGER inicio, fim, frequencia;
+double tempoDecorrido;
 Mix_Chunk *somMovimento = NULL;
 //declaracao de funcao
-void inicializarTabuleiro(std::vector<std::vector<int>>& tabuleiro);
-void embaralharPeca(std::vector<std::vector<int>>& tabuleiro);
-void exibirTabuleiro(const std::vector<std::vector<int>>& tabuleiro);
+
+
+void inicializarTabuleiro(int (&tabuleiro)[4][4]);
+void embaralharPeca(int (&tabuleiro)[4][4]);
+void exibirTabuleiro(const int (&tabuleiro)[4][4]);
+void movimentarEspaco(char direcao, int (&tabuleiro)[4][4]);
 void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte);
-void movimentarEspaco(char direcao, std::vector<std::vector<int>>& tabuleiro);
 int verificarVitoria(const std::vector<std::vector<int>>& tabuleiro);
+char nome[32] = "";
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
                      SDL_Color cor, int x, int y);
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
@@ -42,8 +49,7 @@ void exibirRegras(SDL_Window *window, SDL_Renderer *renderer);
 void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer);
 void jogar(SDL_Window *window, SDL_Renderer *renderer);
 void menu();
-
-
+void salvarTempo(char* nome, double tempoDecorrido);
 
 int main(int argc, char *argv[]) {
   menu();
@@ -211,17 +217,29 @@ int verificarVitoria(int tabuleiro[TAM][TAM]) {
   }
 if (verif == 15) {
   while(veri == 0){
-    
+    QueryPerformanceCounter(&fim);
     vitoria();
     exibevitoria = false;// chama a tela de vitoria
     veri = 1;
   } 
-    //rodando = false;
-    menu(); // chama o menu somente se veri já foi alterado
+    tempoDecorrido = (double)(fim.QuadPart - inicio.QuadPart) / frequencia.QuadPart;
+    salvarTempo(nome, tempoDecorrido);
+    //menu(); // chama o menu somente se veri já foi alterado
     return 0;
 }
 return 0;
-
+}
+void salvarTempo(char* nome, double tempoDecorrido){
+    // salvar nome e tempo 
+    FILE *arquivo = fopen("arquivos/ranking.txt", "a"); // Abre o arquivo em modo de adição (append)
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        //return;
+    }
+    fprintf(arquivo, "Jogador: %s | Tempo: %.4f segundos\n", nome, tempoDecorrido);
+     nome[0] = '\0';
+    fclose(arquivo);
+    menu();
 }
 // Renderiza texto na tela
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
@@ -330,7 +348,99 @@ void vitoria() {
   TTF_Quit();
   SDL_Quit();
 }
+//janela do ranking
+typedef struct {
+    char nome[32];
+    double tempo;
+} Jogador;
 
+int compararJogadores(const void *a, const void *b) {
+    const Jogador *jogadorA = (const Jogador *)a;
+    const Jogador *jogadorB = (const Jogador *)b;
+    
+    if (jogadorA->tempo < jogadorB->tempo) return -1;
+    if (jogadorA->tempo > jogadorB->tempo) return 1;
+    return 0;
+}
+
+void carregarRanking(Jogador *jogadores, int *numJogadores) {
+    FILE *arquivo = fopen("arquivos/ranking.txt", "r");
+    if (arquivo == NULL) {
+        *numJogadores = 0;
+        return;
+    }
+
+    *numJogadores = 0;
+    char linha[100];
+    while (fgets(linha, sizeof(linha), arquivo) && *numJogadores < 10) {
+        char nome[32];
+        double tempo;
+        if (sscanf(linha, "Jogador: %[^|] | Tempo: %lf segundos", nome, &tempo) == 2) {
+            // Remove espaços em branco no final do nome
+            char *end = nome + strlen(nome) - 1;
+            while (end > nome && isspace(*end)) *end-- = '\0';
+            
+            strcpy(jogadores[*numJogadores].nome, nome);
+            jogadores[*numJogadores].tempo = tempo;
+            (*numJogadores)++;
+        }
+    }
+    fclose(arquivo);
+    
+    // Ordenar jogadores pelo tempo (do menor para o maior)
+    qsort(jogadores, *numJogadores, sizeof(Jogador), compararJogadores);
+}
+
+void exibirRanking(SDL_Window *window, SDL_Renderer *renderer) {
+    TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
+    SDL_Color corTexto = {255, 255, 255, 255};
+    bool exibindo = true;
+    SDL_Event evento;
+
+    // Carregar e ordenar ranking
+    Jogador jogadores[10];  // Limitamos a 10 jogadores
+    int numJogadores;
+    carregarRanking(jogadores, &numJogadores);
+
+    while (exibindo) {
+        // Limpar a tela
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        // Renderizar título
+        renderizarTexto(renderer, fonte, "Ranking dos Jogadores (Menor Tempo):", corTexto, 80, 30);
+
+        // Renderizar cada entrada do ranking
+        char textoRanking[100];
+        for (int i = 0; i < numJogadores; i++) {
+            snprintf(textoRanking, sizeof(textoRanking), "%d. %s - %.4f segundos", 
+                    i + 1, jogadores[i].nome, jogadores[i].tempo);
+            renderizarTexto(renderer, fonte, textoRanking, corTexto, 40, 80 + (i * 40));
+        }
+
+        // Renderizar instrução para sair
+        renderizarTexto(renderer, fonte, "Pressione ESC para voltar ao menu.", 
+                       corTexto, 80, 400);
+
+        // Apresentar na tela
+        SDL_RenderPresent(renderer);
+
+        // Ciclo de eventos para sair
+        while (SDL_PollEvent(&evento)) {
+            if (evento.type == SDL_QUIT) {
+                exibindo = false;
+                break;
+            } else if (evento.type == SDL_KEYDOWN && 
+                      evento.key.keysym.sym == SDLK_ESCAPE) {
+                exibindo = false;
+                break;
+            }
+        }
+    }
+
+    // Liberar recursos
+    TTF_CloseFont(fonte);
+}
 // Exibir regras do jogo
 void exibirRegras(SDL_Window *window, SDL_Renderer *renderer) {
   TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
@@ -439,6 +549,68 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
 
   TTF_CloseFont(fonte);
 }
+// Variável global para armazenar o nome
+
+void nomeJogador(SDL_Window *window, SDL_Renderer *renderer) {
+    TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 24);
+    if (!fonte) {
+        printf("Erro ao carregar fonte: %s\n", TTF_GetError());
+        return;
+    }
+
+    char inputText[32] = "";
+    SDL_Color corTexto = {0, 0, 0, 255}; // Texto preto
+    bool run = true;
+    
+    SDL_StartTextInput();
+    memset(inputText, 0, sizeof(inputText));
+
+    while(run) {
+        SDL_Event event;
+        while(SDL_PollEvent(&event)) {
+            switch(event.type) {
+                case SDL_QUIT:
+                    run = false;
+                    break;
+                    
+                case SDL_TEXTINPUT:
+                    if(strlen(inputText) < sizeof(inputText) - 1) {
+                        strncat(inputText, event.text.text, sizeof(inputText) - strlen(inputText) - 1);
+                    }
+                    break;
+                    
+                case SDL_KEYDOWN:
+                    if(event.key.keysym.sym == SDLK_BACKSPACE && strlen(inputText) > 0) {
+                        inputText[strlen(inputText) - 1] = '\0';
+                    } else if(event.key.keysym.sym == SDLK_RETURN && strlen(inputText) > 0) {
+                        strncpy(nome, inputText, sizeof(nome) - 1);
+                          // Chamar o menu após armazenar o nome
+                        run = false;
+                    }
+                    break;
+            }
+        }
+        if(strlen(nome) > 0) {
+            Escolha_dificuldade(window, renderer);
+        }
+
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+
+        renderizarTexto(renderer, fonte, "Digite seu nome:", corTexto, 150, 100);
+        renderizarTexto(renderer, fonte, inputText, corTexto, 150, 200);
+        renderizarTexto(renderer, fonte, "Pressione Enter para confirmar", corTexto, 150, 300);
+
+
+        
+
+        SDL_RenderPresent(renderer);
+    }
+
+    SDL_StopTextInput();
+    TTF_CloseFont(fonte);
+}
+
 // Jogar o jogo sao passados como parametro a janela menu
 void jogar(SDL_Window *window, SDL_Renderer *renderer) {
   TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 24);
@@ -452,8 +624,10 @@ void jogar(SDL_Window *window, SDL_Renderer *renderer) {
 
   bool rodando = true;
   SDL_Event evento;
-
+  QueryPerformanceFrequency(&frequencia);
+  QueryPerformanceCounter(&inicio);
   while (rodando) {
+    
     while (SDL_PollEvent(&evento)) {
       if (evento.type == SDL_QUIT) {
         rodando = false;
@@ -485,6 +659,7 @@ void jogar(SDL_Window *window, SDL_Renderer *renderer) {
   }
   TTF_CloseFont(fonte);
 }
+// Variável global para armazenar o nome do jogador
 void menu() {
   SDL_Init(SDL_INIT_VIDEO);
   TTF_Init();
@@ -536,6 +711,7 @@ void menu() {
         // return;
       }
     SDL_Event evento;
+
     while (rodando) {
       exibevitoria = true;
       veri = 0;
@@ -550,7 +726,8 @@ void menu() {
                       80, 30);
       renderizarTexto(renderer, fonte, "A. Jogar", corTexto, 160, 100);
       renderizarTexto(renderer, fonte, "B. Regras do jogo", corTexto, 160, 140);
-      renderizarTexto(renderer, fonte, "C. Sair", corTexto, 160, 180);
+      renderizarTexto(renderer, fonte, "C. exibir ranking", corTexto, 160, 180);
+      renderizarTexto(renderer, fonte, "D. Sair", corTexto, 160, 225);
 
       SDL_RenderPresent(renderer);
 
@@ -560,16 +737,20 @@ void menu() {
         } else if (evento.type == SDL_KEYDOWN) {
           switch (evento.key.keysym.sym) {
           case SDLK_a:
-            Escolha_dificuldade(janela, renderer);
+            nomeJogador(janela, renderer);
+           // Escolha_dificuldade(janela, renderer);
             break;
           case SDLK_b:
             exibirRegras(janela, renderer);
             break;
           case SDLK_c:
-           // return;
-           exibevitoria = false;
+            exibirRanking(janela, renderer);
+            break;
+          case SDLK_d:
+            exibevitoria = false;
             rodando = false;
             break;
+          
           }
         }
       }
