@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <vector>
 //definicoes
 #define TAM 4
 #define TAMANHO_CELULA 150
@@ -27,12 +28,12 @@ bool exibevitoria = true;
 bool rodando = true;
 Mix_Chunk *somMovimento = NULL;
 //declaracao de funcao
-void inicializarTabuleiro();
-void embaralharPeca();
-void exibirTabuleiro();
+void inicializarTabuleiro(std::vector<std::vector<int>>& tabuleiro);
+void embaralharPeca(std::vector<std::vector<int>>& tabuleiro);
+void exibirTabuleiro(const std::vector<std::vector<int>>& tabuleiro);
 void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte);
-void movimentarEspaco(char direcao);
-int verificarVitoria(int tabuleiro[linhas][colunas]);
+void movimentarEspaco(char direcao, std::vector<std::vector<int>>& tabuleiro);
+int verificarVitoria(const std::vector<std::vector<int>>& tabuleiro);
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
                      SDL_Color cor, int x, int y);
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
@@ -43,6 +44,7 @@ void jogar(SDL_Window *window, SDL_Renderer *renderer);
 void menu();
 
 
+
 int main(int argc, char *argv[]) {
   menu();
   return 0;
@@ -50,7 +52,7 @@ int main(int argc, char *argv[]) {
 
 // Inicializa o tabuleiro com números de 1 a 15 e um espaço vazio
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
-void inicializarTabuleiro() {
+void inicializarTabuleiro(int (&tabuleiro)[4][4]) {
   int valor = 1;
   for (int i = 0; i < TAM; i++) {
     for (int j = 0; j < TAM; j++) {
@@ -65,7 +67,7 @@ void inicializarTabuleiro() {
   }
 }
 // Embaralha as peças do tabuleiro
-void embaralharPeca() {
+void embaralharPeca(int (&tabuleiro)[4][4]) {
   srand(time(NULL));
   // Variável para contar o número de inversões
   int inversoes;
@@ -117,7 +119,7 @@ void embaralharPeca() {
   } while (inversoes % 2 != 0);
 }
 // Exibe o tabuleiro no console
-void exibirTabuleiro() {
+void exibirTabuleiro(const std::vector<std::vector<int>>& tabuleiro) {
   printf("\nTabuleiro:\n\n");
   for (int i = 0; i < TAM; i++) {
     printf("+----+----+----+----+\n");
@@ -190,14 +192,14 @@ void movimentarEspaco(char direcao) {
     // reproduz som ao movimentar
     Mix_PlayChannel(-1, somMovimento, 0);
     // aqui
-    verificarVitoria(tabuleiro);
+    int verificarVitoria(int tabuleiro[4][4]);
   } else {
     printf("Movimento inválido!\n");
   }
 }
 
 // Verifica se o jogador venceu
-int verificarVitoria(int tabuleiro[linhas][colunas]) {
+int verificarVitoria(int tabuleiro[TAM][TAM]) {
   int count = 1, verif = 0;
   for (int i = 0; i < linhas; i++) {
     for (int j = 0; j < colunas; j++) {
@@ -445,8 +447,8 @@ void jogar(SDL_Window *window, SDL_Renderer *renderer) {
     return;
   }
 
-  inicializarTabuleiro();
-  embaralharPeca();
+  inicializarTabuleiro(tabuleiro);
+  embaralharPeca(tabuleiro);
 
   bool rodando = true;
   SDL_Event evento;
@@ -580,4 +582,3 @@ void menu() {
     SDL_Quit();
   }
 }
-
