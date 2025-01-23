@@ -1,19 +1,6 @@
 //importacoes
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-#include <windows.h>
-#include <vector>
-//definicoes
+#include "arquivos/meu_include.h"
 #define TAM 4
 #define TAMANHO_CELULA 150
 #define ESPACO_ENTRE_CELULA 7
@@ -31,7 +18,6 @@ bool rodando = true;
 LARGE_INTEGER inicio, fim, frequencia;
 double tempoDecorrido;
 Mix_Chunk *somMovimento = NULL;
-//declaracao de funcao
 
 
 void inicializarTabuleiro(int (&tabuleiro)[4][4]);
@@ -39,10 +25,7 @@ void embaralharPeca(int (&tabuleiro)[4][4]);
 void exibirTabuleiro(const int (&tabuleiro)[4][4]);
 void movimentarEspaco(char direcao, int (&tabuleiro)[4][4]);
 void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte);
-int verificarVitoria(const std::vector<std::vector<int>>& tabuleiro);
-char nome[32] = "";
-void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
-                     SDL_Color cor, int x, int y);
+void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto, SDL_Color cor, int x, int y);
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
 void vitoria();
 void exibirRegras(SDL_Window *window, SDL_Renderer *renderer);
@@ -50,13 +33,13 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer);
 void jogar(SDL_Window *window, SDL_Renderer *renderer);
 void menu();
 void salvarTempo(char* nome, double tempoDecorrido);
+int verificarVitoria(const std::vector<std::vector<int>>& tabuleiro);
+char nome[32] = "";
 
 int main(int argc, char *argv[]) {
   menu();
   return 0;
 }
-
-// Inicializa o tabuleiro com números de 1 a 15 e um espaço vazio
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
 void inicializarTabuleiro(int (&tabuleiro)[4][4]) {
   int valor = 1;
@@ -173,8 +156,6 @@ void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte) {
   }
   SDL_RenderPresent(renderer);
 }
-// Movimenta o espaço vazio
-// Movimentar espaço vazio com WASD
 void movimentarEspaco(char direcao) {
   int novaLinha = linhaVazia, novaColuna = colunaVazia;
 
@@ -224,23 +205,24 @@ if (verif == 15) {
   } 
     tempoDecorrido = (double)(fim.QuadPart - inicio.QuadPart) / frequencia.QuadPart;
     salvarTempo(nome, tempoDecorrido);
-    //menu(); // chama o menu somente se veri já foi alterado
     return 0;
 }
 return 0;
 }
-void salvarTempo(char* nome, double tempoDecorrido){
-    // salvar nome e tempo 
-    FILE *arquivo = fopen("arquivos/ranking.txt", "a"); // Abre o arquivo em modo de adição (append)
+void salvarTempo(char* nome, double tempoDecorrido) {
+    memmove(nome, nome + 1, strlen(nome));  
+    
+    FILE *arquivo = fopen("arquivos/ranking.txt", "a");
     if (arquivo == NULL) {
         printf("Erro ao abrir o arquivo!\n");
-        //return;
+        return; 
     }
     fprintf(arquivo, "Jogador: %s | Tempo: %.4f segundos\n", nome, tempoDecorrido);
-     nome[0] = '\0';
     fclose(arquivo);
+
     menu();
 }
+
 // Renderiza texto na tela
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
                      SDL_Color cor, int x, int y) {
@@ -255,53 +237,78 @@ void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
 }
 // Exibe a mensagem de vitória
 // tela exibida quando o jogador vence
+// Adicione essas definições no início do seu código ou no header
+const int SCREEN_WIDTH = 800;  // Ajuste conforme sua resolução
+const int SCREEN_HEIGHT = 600; // Ajuste conforme sua resolução
+
+// Protótipos de função antes da implementação
+void renderizarTextoComSombra(SDL_Renderer *renderer, TTF_Font *fonte, 
+                               const char *texto, SDL_Color cor, int x, int y);
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer) {
+    // Música e efeitos
+    Mix_Music *musica = Mix_LoadMUS("arquivos/musicaVVitoria_convertido.mp3");
+    Mix_PlayMusic(musica, -1);
 
-  Mix_Music *musica = Mix_LoadMUS("arquivos/musicaVVitoria_convertido.mp3");
-  Mix_PlayMusic(musica, -1);
+    // Configurações de fonte
+    TTF_Font *fonteTitulo = TTF_OpenFont("arquivos/arial.ttf", 60);
+    TTF_Font *fonteSubtitulo = TTF_OpenFont("arquivos/arial.ttf", 30);
+    
+    // Paleta de cores vibrantes
+    SDL_Color corTitulo = {255, 215, 0, 255};     // Dourado
+    SDL_Color corSubtitulo = {255, 255, 255, 255}; // Branco
+    SDL_Event evento;
 
-  TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 40);
+    Uint32 tempoInicio = SDL_GetTicks();
+    while (exibevitoria) {
+        // Gradiente de fundo
+        for (int y = 0; y < SCREEN_HEIGHT; y++) {
+            Uint8 r = 255 - (y * 255 / SCREEN_HEIGHT);
+            Uint8 g = 128 - (y * 128 / SCREEN_HEIGHT);
+            Uint8 b = 50 + (y * 205 / SCREEN_HEIGHT);
+            SDL_SetRenderDrawColor(renderer, r, g, b, 255);
+            SDL_RenderDrawLine(renderer, 0, y, SCREEN_WIDTH, y);
+        }
 
-  SDL_Color corTexto = {1, 1, 1, 255};
-  SDL_Event evento;
-  Uint32 tempoInicio = SDL_GetTicks();
-  while (exibevitoria) {
-    // Limpar a tela
-    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); 
-    SDL_RenderClear(renderer);
-    // Renderizar texto
-    renderizarTexto(renderer, fonte, "Parabens voce Venceu", corTexto, 135, 250);
-    // Apresentar na tela
-    SDL_RenderPresent(renderer);
-    Uint32 tempoAtual = SDL_GetTicks();
-    if (tempoAtual - tempoInicio >= 7000) {
-      //7000 ms = 7 segundos
-      exibevitoria = false;
-      veri = 0;
-      SDL_DestroyWindow(window);
-      SDL_DestroyRenderer(renderer);
-      break;
+        // Renderizar texto com efeito
+        renderizarTextoComSombra(renderer, fonteTitulo, "VITORIA!", corTitulo, 200, 200);
+        renderizarTexto(renderer, fonteSubtitulo, "Parabens, voce venceu!", corSubtitulo, 150, 300);
       
-  // Fechar a janela após 7 segundos
-    }
-    // Ciclo de eventos para sair
-    while (SDL_PollEvent(&evento)) {
-      if (evento.type == SDL_QUIT) {
-        Mix_FreeMusic(musica);
-        exibevitoria = false;
-        break;
-
         
-      }
+        SDL_RenderPresent(renderer);
+
+        Uint32 tempoAtual = SDL_GetTicks();
+        if (tempoAtual - tempoInicio >= 7000) {
+            exibevitoria = false;
+            veri = 0;
+            break;
+        }
+
+        while (SDL_PollEvent(&evento)) {
+            if (evento.type == SDL_QUIT) {
+                Mix_FreeMusic(musica);
+                exibevitoria = false;
+                break;
+            }
+        }
     }
 
-  }
-  // Liberar recursos
-  TTF_CloseFont(fonte);
-  Mix_FreeMusic(musica);
-  SDL_DestroyWindow(window);
-  SDL_DestroyRenderer(renderer);
+    // Limpeza de recursos
+    TTF_CloseFont(fonteTitulo);
+    TTF_CloseFont(fonteSubtitulo);
+    Mix_FreeMusic(musica);
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
 }
+
+// Implementação das funções auxiliares
+void renderizarTextoComSombra(SDL_Renderer *renderer, TTF_Font *fonte, 
+                               const char *texto, SDL_Color cor, int x, int y) {
+    // Renderiza uma sombra levemente deslocada antes do texto principal
+    SDL_Color corSombra = {50, 50, 50, 128};
+    renderizarTexto(renderer, fonte, texto, corSombra, x+2, y+2);
+    renderizarTexto(renderer, fonte, texto, cor, x, y);
+}
+
 void vitoria() {
   SDL_Init(SDL_INIT_VIDEO);
   TTF_Init();
@@ -355,13 +362,14 @@ typedef struct {
 } Jogador;
 
 int compararJogadores(const void *a, const void *b) {
-    const Jogador *jogadorA = (const Jogador *)a;
-    const Jogador *jogadorB = (const Jogador *)b;
-    
-    if (jogadorA->tempo < jogadorB->tempo) return -1;
-    if (jogadorA->tempo > jogadorB->tempo) return 1;
+    const Jogador &jogadorA = *(const Jogador *)a;
+    const Jogador &jogadorB = *(const Jogador *)b;
+
+    if (jogadorA.tempo < jogadorB.tempo) return -1;
+    if (jogadorA.tempo > jogadorB.tempo) return 1;
     return 0;
 }
+
 
 void carregarRanking(Jogador *jogadores, int *numJogadores) {
     FILE *arquivo = fopen("arquivos/ranking.txt", "r");
@@ -379,7 +387,12 @@ void carregarRanking(Jogador *jogadores, int *numJogadores) {
             // Remove espaços em branco no final do nome
             char *end = nome + strlen(nome) - 1;
             while (end > nome && isspace(*end)) *end-- = '\0';
-            
+
+            // Verifica se o nome começa com "A" e move os caracteres para a esquerda
+            if (nome[0] == 'A') {
+                memmove(nome, nome + 1, strlen(nome)); // Move todos os caracteres uma posição para a esquerda
+            }
+
             strcpy(jogadores[*numJogadores].nome, nome);
             jogadores[*numJogadores].tempo = tempo;
             (*numJogadores)++;
@@ -391,8 +404,9 @@ void carregarRanking(Jogador *jogadores, int *numJogadores) {
     qsort(jogadores, *numJogadores, sizeof(Jogador), compararJogadores);
 }
 
+
 void exibirRanking(SDL_Window *window, SDL_Renderer *renderer) {
-    TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 16);
+    TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 25);
     SDL_Color corTexto = {255, 255, 255, 255};
     bool exibindo = true;
     SDL_Event evento;
@@ -420,7 +434,7 @@ void exibirRanking(SDL_Window *window, SDL_Renderer *renderer) {
 
         // Renderizar instrução para sair
         renderizarTexto(renderer, fonte, "Pressione ESC para voltar ao menu.", 
-                       corTexto, 80, 400);
+                       corTexto, 80, 500);
 
         // Apresentar na tela
         SDL_RenderPresent(renderer);
@@ -553,62 +567,61 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
 
 void nomeJogador(SDL_Window *window, SDL_Renderer *renderer) {
     TTF_Font *fonte = TTF_OpenFont("arquivos/arial.ttf", 24);
-    if (!fonte) {
-        printf("Erro ao carregar fonte: %s\n", TTF_GetError());
+    if (fonte == NULL) {
+        printf("Erro ao carregar a fonte: %s\n", TTF_GetError());
         return;
     }
 
-    char inputText[32] = "";
-    SDL_Color corTexto = {0, 0, 0, 255}; // Texto preto
-    bool run = true;
-    
-    SDL_StartTextInput();
-    memset(inputText, 0, sizeof(inputText));
+    char inputText[32] = "";  //Defina o limite de caracteres
+    SDL_Color corTexto = {0, 0, 0, 255};
+    SDL_Color corTxto = {0, 0, 0, 255};
+    SDL_StartTextInput(); // Começa a entrada de texto
 
-    while(run) {
+    while (1) {
         SDL_Event event;
-        while(SDL_PollEvent(&event)) {
-            switch(event.type) {
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
                 case SDL_QUIT:
-                    run = false;
-                    break;
-                    
-                case SDL_TEXTINPUT:
-                    if(strlen(inputText) < sizeof(inputText) - 1) {
+                    SDL_StopTextInput();  // Fecha a entrada de texto
+                    return;
+          
+                case SDL_TEXTINPUT:  // Entrada de texto do usuário
+                    if (strlen(inputText) < sizeof(inputText) - 1) {
                         strncat(inputText, event.text.text, sizeof(inputText) - strlen(inputText) - 1);
                     }
-                    break;
-                    
+                   break;
+
                 case SDL_KEYDOWN:
-                    if(event.key.keysym.sym == SDLK_BACKSPACE && strlen(inputText) > 0) {
-                        inputText[strlen(inputText) - 1] = '\0';
-                    } else if(event.key.keysym.sym == SDLK_RETURN && strlen(inputText) > 0) {
-                        strncpy(nome, inputText, sizeof(nome) - 1);
-                          // Chamar o menu após armazenar o nome
-                        run = false;
+                    if (event.key.keysym.sym == SDLK_BACKSPACE && strlen(inputText) > 0) {
+                        inputText[strlen(inputText) - 1] = '\0'; // Remove o último caractere
                     }
-                    break;
+                    if (event.key.keysym.sym == SDLK_RETURN && strlen(inputText) > 0) {
+                        // Armazena o nome na variável global
+                        strncpy(nome, inputText, sizeof(nome) - 1);
+                        nome[sizeof(nome) - 1] = '\0';  // Garante que nome esteja corretamente terminada
+
+                        Escolha_dificuldade(window, renderer); // Chama a próxima tela
+                        SDL_StopTextInput();  // Finaliza a entrada de texto
+                        return;
+                    }
+                   // break;
             }
         }
-        if(strlen(nome) > 0) {
-            Escolha_dificuldade(window, renderer);
-        }
 
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Limpa a tela com fundo branco
         SDL_RenderClear(renderer);
 
+        // Exibe as mensagens na tela
         renderizarTexto(renderer, fonte, "Digite seu nome:", corTexto, 150, 100);
         renderizarTexto(renderer, fonte, inputText, corTexto, 150, 200);
         renderizarTexto(renderer, fonte, "Pressione Enter para confirmar", corTexto, 150, 300);
 
-
-        
-
-        SDL_RenderPresent(renderer);
+        SDL_RenderPresent(renderer); // Atualiza a tela
     }
 
-    SDL_StopTextInput();
+    // Libera a fonte depois de terminar
     TTF_CloseFont(fonte);
+    SDL_StopTextInput();  // Finaliza a entrada de texto, caso tenha sido esquecido
 }
 
 // Jogar o jogo sao passados como parametro a janela menu
