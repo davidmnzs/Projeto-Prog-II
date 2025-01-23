@@ -538,7 +538,7 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
       } else if (evento.type == SDL_KEYDOWN) {
         switch (evento.key.keysym.sym) {
         case SDLK_1:
-          dificuldade = 0; // Fácil
+          dificuldade = 20; // Fácil
           jogar(window, renderer);
           escolhendo = false;
           break;
