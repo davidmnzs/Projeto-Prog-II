@@ -209,19 +209,24 @@ if (verif == 15) {
 }
 return 0;
 }
+
+
 void salvarTempo(char* nome, double tempoDecorrido) {
-    memmove(nome, nome + 1, strlen(nome));  
-    
-    FILE *arquivo = fopen("arquivos/ranking.txt", "a");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo!\n");
-        return; 
+    string nomeStr(nome);
+    nomeStr = nomeStr.substr(1);  // Remover o primeiro caractere
+
+    ofstream arquivo("arquivos/ranking.txt", ios::app);
+    if (!arquivo.is_open()) {
+        cout << "Erro ao abrir o arquivo!" << endl;
+        return;
     }
-    fprintf(arquivo, "Jogador: %s | Tempo: %.4f segundos\n", nome, tempoDecorrido);
-    fclose(arquivo);
+
+    arquivo << "Jogador: " << nomeStr << " | Tempo: " << tempoDecorrido << " segundos" << endl;
+    arquivo.close();
 
     menu();
 }
+
 
 // Renderiza texto na tela
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
@@ -237,7 +242,6 @@ void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto,
 }
 // Exibe a mensagem de vitória
 // tela exibida quando o jogador vence
-// Adicione essas definições no início do seu código ou no header
 const int SCREEN_WIDTH = 800;  // Ajuste conforme sua resolução
 const int SCREEN_HEIGHT = 600; // Ajuste conforme sua resolução
 
@@ -538,7 +542,7 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
       } else if (evento.type == SDL_KEYDOWN) {
         switch (evento.key.keysym.sym) {
         case SDLK_1:
-          dificuldade = 20; // Fácil
+          dificuldade = 0; // Fácil
           jogar(window, renderer);
           escolhendo = false;
           break;
