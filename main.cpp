@@ -64,7 +64,7 @@ void embaralharPeca(int (&tabuleiro)[4][4]) {
   do {
     inversoes = 0;
     // Realiza o embaralhamento de peças
-    for (int i = 0; i < dificuldade; i++) {
+    for (int i = 0; i < ; i++) {
       // Escolhe duas posições aleatórias
       int x1 = rand() % TAM;
       int y1 = rand() % TAM;
@@ -542,7 +542,7 @@ void Escolha_dificuldade(SDL_Window *window, SDL_Renderer *renderer) {
       } else if (evento.type == SDL_KEYDOWN) {
         switch (evento.key.keysym.sym) {
         case SDLK_1:
-          dificuldade = 0; // Fácil
+          dificuldade = 5; // Fácil
           jogar(window, renderer);
           escolhendo = false;
           break;
