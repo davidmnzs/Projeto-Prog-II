@@ -18,5 +18,13 @@
 
 // Biblioteca C++
 #include <vector>
+#include <conio.h>
+#include <locale.h>
+#include <iostream>
+#include <stdlib.h>
+#include <fstream>
+#include <string>
+#include <cstring>
+using namespace std;
 
 #endif // MEU_INCLUDE_H
