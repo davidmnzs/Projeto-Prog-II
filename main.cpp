@@ -20,10 +20,11 @@ double tempoDecorrido;
 Mix_Chunk *somMovimento = NULL;
 
 
-void inicializarTabuleiro(int (&tabuleiro)[4][4]);
-void embaralharPeca(int (&tabuleiro)[4][4]);
+void Tabuleiro(int (&tabuleiro)[4][4]);
+void Tabuleiro(int (&tabuleiro)[4][4], bool embaralhar);
+void Tabuleiro(char direcao, int (&tabuleiro)[4][4]);
+
 void exibirTabuleiro(const int (&tabuleiro)[4][4]);
-void movimentarEspaco(char direcao, int (&tabuleiro)[4][4]);
 void desenharTabuleiro(SDL_Renderer *renderer, TTF_Font *fonte);
 void renderizarTexto(SDL_Renderer *renderer, TTF_Font *fonte, const char *texto, SDL_Color cor, int x, int y);
 void JogadorVenceu(SDL_Window *window, SDL_Renderer *renderer);
@@ -41,7 +42,7 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 // Inicializar o tabuleiro com números de 1 a 15 e espaço vazio
-void inicializarTabuleiro(int (&tabuleiro)[4][4]) {
+void Tabuleiro(int (&tabuleiro)[4][4]) {
   int valor = 1;
   for (int i = 0; i < TAM; i++) {
     for (int j = 0; j < TAM; j++) {
@@ -56,7 +57,7 @@ void inicializarTabuleiro(int (&tabuleiro)[4][4]) {
   }
 }
 // Embaralha as peças do tabuleiro
-void embaralharPeca(int (&tabuleiro)[4][4]) {
+void Tabuleiro(int (&tabuleiro)[4][4],bool inicializar) {
   srand(time(NULL));
   // Variável para contar o número de inversões
   int inversoes;
@@ -200,7 +201,7 @@ if (verif == 15) {
   while(veri == 0){
     QueryPerformanceCounter(&fim);
     vitoria();
-    exibevitoria = false;// chama a tela de vitoria
+    exibevitoria = false;
     veri = 1;
   } 
     tempoDecorrido = (double)(fim.QuadPart - inicio.QuadPart) / frequencia.QuadPart;
@@ -636,8 +637,8 @@ void jogar(SDL_Window *window, SDL_Renderer *renderer) {
     return;
   }
 
-  inicializarTabuleiro(tabuleiro);
-  embaralharPeca(tabuleiro);
+  Tabuleiro(tabuleiro);
+  Tabuleiro(tabuleiro, true);
 
   bool rodando = true;
   SDL_Event evento;
